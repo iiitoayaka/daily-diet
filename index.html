@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>デイリーヘルスログ</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Helvetica', sans-serif;
+      margin: 40px;
+      background-color: #f8f9fa;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+    th, td {
+      border: 1px solid #dee2e6;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #e9ecef;
+    }
+    .note {
+      margin-top: 30px;
+      font-size: 0.9rem;
+      color: #666;
+    }
+    input[type="number"], input[type="text"] {
+      width: 90%;
+      padding: 5px;
+      font-size: 1rem;
+      text-align: center;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 1rem;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .weekly-summary, .weight-log {
+      margin-top: 40px;
+      padding: 20px;
+      border-radius: 5px;
+    }
+    .weekly-summary {
+      background-color: #fff3cd;
+      border: 1px solid #ffeeba;
+    }
+    .weight-log {
+      background-color: #e2f0d9;
+      border: 1px solid #b7dfb7;
+    }
+    #weightChart {
+      max-width: 600px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <!-- 省略 -->
+
+  <script>
+    let cumulativeBalance = 0;
+    const logs = [];
+    const weightData = [];
+
+    function updateWeeklySummary() {
+      const last7 = logs.slice(-7);
+      if (last7.length === 0) return;
+
+      const avgIntake = Math.round(last7.reduce((sum, l) => sum + l.intake, 0) / last7.length);
+      const avgBurn = Math.round(last7.reduce((sum, l) => sum + l.totalBurn, 0) / last7.length);
+      const avgBalance = Math.round(last7.reduce((sum, l) => sum + l.balance, 0) / last7.length);
+
+      document.getElementById("weeklySummary").innerHTML = `
+        <strong>📊 最新7日間の平均</strong><br>
+        平均摂取カロリー: ${avgIntake} kcal ／ 平均総消費カロリー: ${avgBurn} kcal ／ 平均カロリー収支: ${avgBalance} kcal
+      `;
+    }
+
+    function addLog() {
+      // 同上（変更なし）
+    }
+
+    function addWeight() {
+      const weightDate = document.getElementById('weightDate').value;
+      const weightValue = parseFloat(document.getElementById('weightValue').value);
+      if (!weightDate || isNaN(weightValue)) return;
+
+      weightData.push({ date: weightDate, weight: weightValue });
+
+      const list = document.getElementById('weightList');
+      const li = document.createElement('li');
+      li.textContent = `${weightDate}：${weightValue} kg`;
+      list.appendChild(li);
+
+      updateWeightChart();
+
+      document.getElementById('weightDate').value = '';
+      document.getElementById('weightValue').value = '';
+    }
+
+    let chart;
+    function updateWeightChart() {
+      const ctx = document.getElementById('weightChart').getContext('2d');
+      const labels = weightData.map(entry => entry.date);
+      const data = weightData.map(entry => entry.weight);
+
+      if (chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: '体重 (kg)',
+              data: data,
+              borderColor: 'rgba(75, 192, 192, 1)',
+              backgroundColor: 'rgba(75, 192, 192, 0.2)',
+              tension: 0.2,
+              fill: true
+            },
+            {
+              label: '目標体重 (43kg)',
+              data: Array(data.length).fill(43),
+              borderColor: 'rgba(255, 99, 132, 1)',
+              borderDash: [5, 5],
+              pointRadius: 0,
+              fill: false
+            }
+          ]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: false
+            }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
